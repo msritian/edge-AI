@@ -1,3 +1,17 @@
+# XNOR-Net: Efficient Inference with Bitwise Kernels
+
+This repository contains a high-performance implementation of **XNOR-Net** (Binary Neural Networks) for CIFAR-10, featuring custom C++ bitwise kernels for accelerated inference.
+
+## 🚀 Overview
+
+The project aims to demonstrate the efficiency gains of binarized neural networks on CPU architectures. By replacing traditional floating-point convolutions with bitwise XNOR and POPCOUNT operations, we can theoretically achieve significant speedups and memory reductions.
+
+### Key Features
+- **XNOR-Net Architecture**: Optimized VGG-style BNN with Batch Normalization and specialized binary layers.
+- **Custom C++ Kernels**: Efficient implementation of bitwise convolutions using bit-packing and native popcount logic.
+- **Stable BNN Training**: Implementation of the Straight-Through Estimator (STE), latent weight clipping, and channel-wise scaling.
+- **Automated Benchmarking**: Tools to compare PyTorch FP32 performance vs. our optimized bitwise implementation.
+
 ---
 
 ## 📈 Comparative Analysis
@@ -20,6 +34,8 @@ We conducted a side-by-side comparison between the XNOR-Net and a Full-Precision
 - **Resource Efficiency**: In specialized hardware (FPGA/ASIC), the BNN occupies 32x less silicon area for weights and uses significantly less power due to the absence of floating-point multipliers.
 
 ---
+
+## 🏗 Knowledge & Implementation Details
 
 ### 1. Binary Neural Network (BNN) Architecture
 The model uses a binarized version of a VGG-like network. Unlike standard networks, the weights and activations are constrained to $\{-1, +1\}$.
