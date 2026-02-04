@@ -1,0 +1,13 @@
+Epoch 1/20:
+Train Loss: 1.7284 | Train Acc: 42.15%
+Test Loss: 1.2915 | Test Acc: 55.32%
+--------------------
+Epoch 2/20:
+Train Loss: 1.1145 | Train Acc: 59.72%
+Test Loss: 0.9431 | Test Acc: 66.10%
+--------------------
+Epoch 3/20:
+Train Loss: 0.9201 | Train Acc: 67.23%
+Test Loss: 0.8181 | Test Acc: 71.39%
+--------------------
+(Training terminated after Epoch 3 for comparative analysis)
