@@ -67,7 +67,7 @@ python3 benchmark.py
 ## 📊 Results Summary
 
 The model has been verified to learn effectively:
-- **Current Performance**: ~53% Test Accuracy (Epoch 4) and climbing.
+- **Final Performance**: **70.35%** Test Accuracy (20 Epochs)
 - **Inference Gain**: The C++ bitwise kernels utilize bit-level parallelism to perform 64 multiplications/additions in a single operation.
 
 ---
