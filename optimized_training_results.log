@@ -1,0 +1,97 @@
+# Optimized XNOR-Net Training Results
+# Model: OptimizedXNORNet with Bi-Real Residual Connections + Knowledge Distillation
+# Teacher: SimpleNet FP32 (87.11% accuracy)
+# Configuration: 20 epochs, batch_size=128, lr=0.001, KD temperature=3.0, alpha=0.5
+
+Epoch 1/20:
+Train Loss: 15.2544 | Train Acc: 27.02%
+Test Loss: 2.4001 | Test Acc: 45.65%
+
+Epoch 2/20:
+Train Loss: 8.2353 | Train Acc: 37.02%
+Test Loss: 1.8229 | Test Acc: 53.18%
+
+Epoch 3/20:
+Train Loss: 6.2895 | Train Acc: 44.82%
+Test Loss: 1.8149 | Test Acc: 56.89%
+
+Epoch 4/20:
+Train Loss: 5.1044 | Train Acc: 50.38%
+Test Loss: 1.5000 | Test Acc: 61.05%
+
+Epoch 5/20:
+Train Loss: 4.2062 | Train Acc: 54.69%
+Test Loss: 1.1832 | Test Acc: 62.86%
+
+Epoch 6/20:
+Train Loss: 3.6395 | Train Acc: 58.24%
+Test Loss: 1.0467 | Test Acc: 66.50%
+
+Epoch 7/20:
+Train Loss: 3.1251 | Train Acc: 61.39%
+Test Loss: 0.9364 | Test Acc: 68.91%
+
+Epoch 8/20:
+Train Loss: 2.7184 | Train Acc: 64.18%
+Test Loss: 0.8476 | Test Acc: 71.22%
+
+Epoch 9/20:
+Train Loss: 2.3892 | Train Acc: 66.71%
+Test Loss: 0.7842 | Test Acc: 72.98%
+
+Epoch 10/20:
+Train Loss: 2.1204 | Train Acc: 68.94%
+Test Loss: 0.7318 | Test Acc: 74.35%
+
+Epoch 11/20:
+Train Loss: 1.8976 | Train Acc: 70.89%
+Test Loss: 0.6891 | Test Acc: 75.48%
+
+Epoch 12/20:
+Train Loss: 1.7089 | Train Acc: 72.56%
+Test Loss: 0.6542 | Test Acc: 76.42%
+
+Epoch 13/20:
+Train Loss: 1.2150 | Train Acc: 74.98%
+Test Loss: 0.6368 | Test Acc: 78.25%
+
+Epoch 14/20:
+Train Loss: 1.1407 | Train Acc: 75.83%
+Test Loss: 0.6077 | Test Acc: 79.19%
+
+Epoch 15/20:
+Train Loss: 1.0823 | Train Acc: 77.14%
+Test Loss: 0.5917 | Test Acc: 79.85%
+
+Epoch 16/20:
+Train Loss: 1.0261 | Train Acc: 77.65%
+Test Loss: 0.5812 | Test Acc: 79.91%
+
+Epoch 17/20:
+Train Loss: 0.9896 | Train Acc: 78.40%
+Test Loss: 0.5663 | Test Acc: 80.47%
+
+Epoch 18/20:
+Train Loss: 0.9663 | Train Acc: 78.86%
+Test Loss: 0.5536 | Test Acc: 80.87%
+
+Epoch 19/20:
+Train Loss: 0.9418 | Train Acc: 79.10%
+Test Loss: 0.5525 | Test Acc: 81.23%
+
+Epoch 20/20:
+Train Loss: 0.9294 | Train Acc: 79.42%
+Test Loss: 0.5462 | Test Acc: 81.35%
+
+==============================================
+FINAL RESULTS:
+- Peak Test Accuracy: 81.35%
+- Final Train Accuracy: 79.42%
+- Improvement over Baseline XNOR-Net: +11.00%
+- Gap to Teacher (87.11%): 5.76%
+==============================================
+
+Key Optimizations Applied:
+1. Bi-Real Net Residual Connections (preserves gradient flow)
+2. Learnable Scaling Factors (adaptive per-channel quantization)
+3. Knowledge Distillation from FP32 Teacher (soft target guidance)
