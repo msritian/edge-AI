@@ -142,21 +142,21 @@ We conducted a rigorous comparison between the **Custom Bitwise Kernel**, **PyTo
 - **Batch Size**: 128 (Chunking 128 images per forward pass for throughput).
 
 #### Performance Matrix
-| Metric | PyTorch (Optimized KD) | ONNX Runtime (Optimized KD) | **Bitwise Kernel (Optimized KD)** |
-| :--- | :--- | :--- | :--- |
-| **Backend Engine** | Standard `F.conv2d` | ONNX Exec Engine | **Custom NEON XNOR Kernel** |
-| **Avg Batch Latency**| 2295.67 ms | 2764.04 ms | **1913.73 ms (WINNER)** |
-| **Peak RAM (RSS)** | 817.06 MB | **615.30 MB** | 875.92 MB* |
-| **Weight Size** | 9.20 MB | 9.20 MB | **0.28 MB (32x reduction)** |
-| **Accuracy** | 81.35% | 81.34% | **81.34%** |
+| Model / Engine | Version | Accuracy | Avg Latency | Peak RAM | Weight Size |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **SimpleNet (Teacher)** | **FP32** | **87.11%** | **544.46 ms** | **572.70 MB** | 8.00 MB |
+| Optimized BNN (PyTorch) | Simulated | 81.35% | 2156.08 ms | 788.94 MB | 9.20 MB |
+| Optimized BNN (ONNX) | Optimized KD | 81.34% | 2447.90 ms | **675.62 MB** | 9.20 MB |
+| **Optimized BNN (Bitwise)**| **Custom NEON** | 81.34% | **1819.14 ms*** | 769.30 MB | **0.28 MB (32x)!!** |
 
-#### Key Findings
-1.  **Bitwise Supremacy**: Our handcrafted bitwise kernel is **~20% faster** than PyTorch and **~44% faster** than ONNX Runtime in end-to-end inference.
-2.  **Storage Efficiency**: The binarized model is **32x smaller** (0.28 MB vs 9.2 MB), making it ideal for edge devices with extremely limited storage.
-3.  **Correctness**: The bitwise implementation (XNOR/Popcount) perfectly matches the accuracy of the simulated model (81.34%), proving the mathematical correctness of the ARM NEON intrinsics.
+#### Key Insights
+1.  **Architecture Depth**: The **FP32 Teacher** (`SimpleNet`) is faster and leaner primarily because it is a **shallower 3-layer network**. By contrast, the **Optimized BNN** is a **7-layer deep architecture** designed to maximize accuracy through residual flow.
+2.  **Apples-to-Apples (Same Model)**: For the **same deep architecture** (`OptimizedXNORNet`), the **Bitwise Kernel** is **~1.2x faster** than PyTorch and **~1.35x faster** than ONNX Runtime.
+3.  **Storage Dominance**: The BNN achieves an untouchable **32x reduction** in storage requirement (0.28 MB vs 9+ MB), enabling complex models to fit in cache or tiny embedded memory.
+4.  **Bitwise Benefit**: Even with the overhead of Python-based tensor packing, bit-level parallelism overcomes the raw speed of highly tuned FP32 libraries on modern ARM64 cores.
 
-> [!NOTE]
-> \* The slightly higher Peak RAM in the Bitwise implementation is due to the current Python-heavy inference loop (managing buffers and explicit packing in Python). This would be dramatically reduced by moving the entire model graph into the C++ extension.
+> [!IMPORTANT]
+> \* The Bitwise speedup is **1.42x** at the core kernel level. The total end-to-end BNN inference is currently bottlenecked by Python packing logic. Moving the entire graph into the C++ extension would likely put the 7-layer BNN's speed on par with the 3-layer FP32 teacher.
 
 ---
 
