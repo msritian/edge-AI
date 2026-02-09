@@ -136,14 +136,14 @@ The optimized model demonstrates exceptional performance for a fully binarized n
 ### 3. Comprehensive Performance Comparison (Batch 128, 1 Thread)
 The following matrix evaluates the **Identical 7-Layer Topology** across three distinct execution environments. This "fair grounds" test isolates architectural depth from engine efficiency.
 
-| Metric | **FP32 Native** (Baseline) | **ONNX BNN** (Production) | **Bitwise BNN** (Optimized) |
+| Metric | **FP32 Native** (Baseline) | **ONNX BNN** | **Bitwise BNN** (Optimized) |
 | :--- | :--- | :--- | :--- |
 | **Model Weight Storage** | 9.20 MB | 9.20 MB | **0.28 MB (32x reduction)** |
 | **Test Accuracy** | ~87.1% (Reference) | 81.35% | 81.34% |
 | **End-to-End Latency** | **1503 ms** | 2202 ms | 1735 ms |
 | **Peak Runtime RAM** | **586 MB** | 655 MB | 866 MB |
 
-#### � Technical Analysis of Performance Metrics
+#### 🛠 Technical Analysis of Performance Metrics
 
 The observed discrepancies between theoretical bitwise efficiency and end-to-end system performance are driven by three primary engineering factors:
 
@@ -156,10 +156,10 @@ The observed discrepancies between theoretical bitwise efficiency and end-to-end
 *   **Buffer Management**: The higher Peak RAM in the Bitwise implementation is a byproduct of explicit buffer allocations for bit-packing. A production-ready fused implementation (BN -> Pack -> XNOR -> Add) would eliminate these intermediate buffers, potentially reducing RAM usage by ~70% compared to FP32.
 
 ##### 3. The ONNX BNN Baseline
-*   The **ONNX BNN** serves as the production-grade baseline. It utilizes standard ONNX operators to simulate binary logic. Our **Handcrafted Bitwise Kernel outperforms ONNX Runtime by 1.27x**, demonstrating the superior efficiency of native bit-level parallelism over general-purpose inference engines for BNNs.
+*   The **ONNX BNN** serves as the comparative baseline. It utilizes standard ONNX operators to simulate binary logic. Our **Handcrafted Bitwise Kernel outperforms ONNX Runtime by 1.27x**, demonstrating the superior efficiency of native bit-level parallelism over general-purpose inference engines for BNNs.
 
 ### 📈 Strategic Conclusion
-For leadership review, the takeaway is clear: **Storage and Mathematical Efficiency**. 
+The takeaway is clear: **Storage and Mathematical Efficiency**. 
 The prototype delivers an absolute **32x reduction in flash memory footprint** and proves that bitwise arithmetic is fundamentally faster on the CPU. The current latency gap is a software integration artifact that can be resolved through full-graph C++ fusion.
 
 ---
