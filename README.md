@@ -141,17 +141,20 @@ We implemented a custom high-performance inference engine to demonstrate the raw
     -   **SIMD Vectorization**: Using 128-bit registers (`uint8x16_t`) to process 128 binary elements per CPU cycle.
     -   **NHWC Layout**: Optimizing memory access patterns for CPU cache efficiency.
 
-#### Benchmark Results (Single-Threaded Context)
-We compared the **Optimized BNN** against the highly polished **PyTorch FP32** kernel. To ensure a fair comparison of algorithmic efficiency, both were restricted to a single CPU core.
-
-| Metric | PyTorch Breakdown | Optimized Bitwise Kernel | Speedup |
+| Metric | PyTorch (FP32 Sim) | ONNX Runtime (FP32) | **Optimized Bitwise Kernel** |
 | :--- | :--- | :--- | :--- |
-| **Logic** | `F.conv2d` (Im2Col + GEMM) | `bitwise_conv2d` (XNOR + Popcount) | - |
-| **Kernel Latency** | 237.34 ms | **166.97 ms** | **1.42x FASTER** |
-| **Full Model Inference** | 2195.20 ms | **1843.80 ms** | **1.19x FASTER** |
-| **Accuracy (CIFAR-10)** | 81.34% | **81.34%** | **Identical** |
+| **Logic** | `F.conv2d` | ONNX Exec Engine | **XNOR + Popcount** |
+| **Avg Batch Time** | 2295.67 ms | 2764.04 ms | **1913.73 ms** |
+| **Peak RAM (RSS)** | 817.06 MB | **615.30 MB** | 875.92 MB* |
+| **Weight Size** | 9.2 MB | 9.2 MB | **0.28 MB (32x smaller)** |
+| **Accuracy** | 81.35% | 81.34% | **81.34%** |
 
-> **Result**: The Bitwise BNN is **~42% faster** at the kernel level and **~20% faster** end-to-end (including Python overhead) while maintaining full accuracy. The model is also **32x smaller** in size.
+> **Analysis**: 
+> 1. **Speed**: Our handcrafted **Bitwise Kernel** outperforms both PyTorch and ONNX Runtime by **~20%-40%** on end-to-end inference. In pure kernel micro-benchmarks, the speedup is **1.42x**.
+> 2. **Memory**: We achieve a **32x reduction** in model weight size.
+> 3. *The slightly higher Peak RAM in the Bitwise implementation is due to Python-level buffer management in the custom inference loop, which can be further optimized by moving the entire forward pass to C++.
+
+> **Verdict**: Validated algorithmic efficiency (Bitwise) > Tooling optimization (ONNX) for BNNs on single-core architectures.
 
 ---
 

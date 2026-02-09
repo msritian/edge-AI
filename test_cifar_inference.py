@@ -5,6 +5,9 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 import time
 import bitwise_ops
+import onnxruntime as ort
+import numpy as np
+import os
 from models import get_model, OptimizedXNORNet, ResidualBinaryLayer
 
 def load_data(batch_size=128):
@@ -150,7 +153,8 @@ def run_test():
             if batch_idx % 20 == 0:
                 print(f"BNN Batch {batch_idx}: Accuracy: {100.*correct/total:.2f}% | Batch Time: {(end_batch - start_batch)*1000:.1f}ms")
                 
-        print(f"BNN Final Accuracy: {100.*correct/total:.2f}%")
+        bnn_acc = 100.*correct/total
+        print(f"BNN Final Accuracy: {bnn_acc:.2f}%")
         bnn_time = total_time/total_batches*1000
         print(f"BNN Avg Batch Time: {bnn_time:.2f} ms")
 
@@ -188,11 +192,62 @@ def run_test():
             if batch_idx % 20 == 0:
                  print(f"Simulated Batch {batch_idx}: Batch Time: {(end_batch - start_batch)*1000:.1f}ms")
                  
+    sim_acc = 100.*correct/total
+    print(f"Simulated Final Accuracy: {sim_acc:.2f}%")
     print(f"Simulated Avg Batch Time: {total_time/total_batches*1000:.2f} ms")
+    sim_time = total_time/total_batches*1000
+
+    # 3. Run ONNX Runtime Baseline
+    print("\n--- Testing OptimizedXNORNet (ONNX Runtime Backend) ---")
+    onnx_path = 'checkpoints/xnor_network.onnx'
+    if not os.path.exists(onnx_path):
+        from benchmark_onnx import export_to_onnx
+        export_to_onnx('checkpoints/xnor_kd_cifar10.pth', onnx_path)
     
-    print(f"\n--- Final Verdict ---")
-    print(f"Bitwise Kernel (Real) Time: {bnn_time:.2f} ms") # Need to capture this variable from above scope
-    print(f"PyTorch Backend (Sim) Time: {total_time/total_batches*1000:.2f} ms")
+    sess_options = ort.SessionOptions()
+    sess_options.intra_op_num_threads = 1
+    session = ort.InferenceSession(onnx_path, sess_options)
+    input_name = session.get_inputs()[0].name
+    
+    correct = 0
+    total = 0
+    total_time = 0.0
+    total_batches = 0
+    
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(testloader):
+            # ONNX expects numpy
+            inputs_np = inputs.numpy()
+            
+            start_batch = time.time()
+            outputs_np = session.run(None, {input_name: inputs_np})[0]
+            end_batch = time.time()
+            
+            outputs = torch.from_numpy(outputs_np)
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+            
+            total_time += (end_batch - start_batch)
+            total_batches += 1
+            
+            if batch_idx % 20 == 0:
+                 print(f"ONNX Batch {batch_idx}: Accuracy: {100.*correct/total:.2f}% | Batch Time: {(end_batch - start_batch)*1000:.1f}ms")
+
+    onnx_time = total_time/total_batches*1000
+    print(f"ONNX Avg Batch Time: {onnx_time:.2f} ms")
+    print(f"ONNX Final Accuracy: {100.*correct/total:.2f}%")
+    
+    print(f"\n--- FINAL COMPARISON (Batch 128, 1 Thread) ---")
+    print(f"{'Engine':<20} | {'Accuracy':<10} | {'Avg Batch Time':<15}")
+    print("-" * 50)
+    print(f"{'Bitwise Kernel':<20} | {bnn_acc:.2f}%    | {bnn_time:.2f} ms")
+    print(f"{'PyTorch Sim':<20} | {sim_acc:.2f}%    | {sim_time:.2f} ms")
+    print(f"{'ONNX Runtime':<20} | {100.*correct/total:.2f}%    | {onnx_time:.2f} ms")
+    
+    speedup_vs_sim = sim_time / bnn_time
+    speedup_vs_onnx = onnx_time / bnn_time
+    print(f"\nVerdict: Bitwise is {speedup_vs_sim:.2f}x faster than PyTorch and {speedup_vs_onnx:.2f}x faster than ONNX.")
 
     
     # Summary
