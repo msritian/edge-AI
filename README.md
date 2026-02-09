@@ -146,7 +146,7 @@ Comparison between the same graph topology (7 layers) in FP32 vs. Bitwise engine
 
 | Model / Engine | Version | Accuracy | Avg Latency | Peak RAM | Weight Size |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **SimpleNet (Teacher)** | Original FP32 | **87.11%** | **616.89 ms** | **585.50 MB** | 8.00 MB |
+| **OptimizedFP32Net** | **7-Layer FP32** | **~87% (Ref)** | **1503.13 ms** | **585.50 MB** | 9.20 MB |
 | Optimized BNN (ONNX) | Optimized KD | 81.35% | 2201.82 ms | 655.19 MB | 9.20 MB |
 | **Optimized BNN (Bitwise)**| **Custom NEON** | 81.34% | **1735.30 ms*** | 866.03 MB | **0.28 MB (32x!)** |
 
