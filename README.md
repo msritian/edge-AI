@@ -114,9 +114,13 @@ python3 train.py --model xnor --epochs 20 --lr 0.001 --kd --teacher-path checkpo
 ```
 
 ### Benchmarking
-Compare the performance of the standard PyTorch FP32 implementation against our bitwise kernel:
+Compare the performance across three engines (PyTorch, ONNX, and Custom Bitwise):
 ```bash
+# Optimized Kernel Micro-benchmark
 python3 benchmark.py
+
+# Full 3-Way End-to-End Comparison (Accuracy + Speed)
+python3 test_cifar_inference.py
 ```
 
 ---
