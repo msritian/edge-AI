@@ -142,9 +142,9 @@ We conducted a rigorous comparison between the **Custom Bitwise Kernel**, **PyTo
 - **Batch Size**: 128 (Chunking 128 images per forward pass for throughput).
 
 #### Performance Matrix
-| Metric | PyTorch (FP32 Sim) | ONNX Runtime (FP32) | **Optimized Bitwise Kernel** |
+| Metric | PyTorch (Optimized KD) | ONNX Runtime (Optimized KD) | **Bitwise Kernel (Optimized KD)** |
 | :--- | :--- | :--- | :--- |
-| **Backend Engine** | Standard `F.conv2d` | ONNX Execution Engine | **Custom NEON XNOR Kernel** |
+| **Backend Engine** | Standard `F.conv2d` | ONNX Exec Engine | **Custom NEON XNOR Kernel** |
 | **Avg Batch Latency**| 2295.67 ms | 2764.04 ms | **1913.73 ms (WINNER)** |
 | **Peak RAM (RSS)** | 817.06 MB | **615.30 MB** | 875.92 MB* |
 | **Weight Size** | 9.20 MB | 9.20 MB | **0.28 MB (32x reduction)** |
