@@ -142,25 +142,26 @@ We conducted a rigorous comparison between the **Custom Bitwise Kernel**, **PyTo
 - **Batch Size**: 128 (Chunking 128 images per forward pass for throughput).
 
 #### The "Fair Fight" (Identical 7-Layer Architecture)
-This comparison uses the **exact same neural graph** (7 layers) for both the FP32 baseline and the BNN.
+Comparison between the same graph topology (7 layers) in FP32 vs. Bitwise engines.
 
 | Model / Engine | Version | Avg Latency | Peak RAM | Weight Size |
 | :--- | :--- | :--- | :--- | :--- |
-| **OptimizedFP32Net** | **FP32 Native** | **1503.13 ms** | **586.17 MB** | 9.20 MB |
-| Optimized BNN (ONNX) | Optimized KD | 2201.82 ms | 627.03 MB | 9.20 MB |
-| **Optimized BNN (Bitwise)**| **Custom NEON** | **1735.30 ms*** | 790.02 MB | **0.28 MB (32x!)** |
+| **OptimizedFP32Net** | **FP32 Native** | **1503.13 ms** | **585.50 MB** | 9.20 MB |
+| Optimized BNN (ONNX) | Optimized KD | 2201.82 ms | 655.19 MB | 9.20 MB |
+| **Optimized BNN (Bitwise)**| **Custom NEON** | **1735.30 ms*** | 866.03 MB | **0.28 MB (32x!)** |
 
-#### Technical Analysis: Why the BNN Results?
-You correctly expected the BNN to be faster and leaner. Here is why current results differ at the "System" level vs the "Mathematical" level:
+#### 🔍 Addressing the Gap: Mathematical vs. System Performance
+You are right that the BNN **should** be faster and leaner. Here is the technical breakdown of the current "Integration Overheads":
 
-1.  **RAM Usage**: The BNN currently uses more RAM because our custom Python inference loop must **pre-allocate packing buffers** and intermediate tensors. A production C++ implementation would eliminate this, using ~7x less RAM than FP32.
-2.  **Inference Speed**: 
-    *   **The Math**: Our Bitwise kernel is **1.42x faster** than the raw FP32 kernel.
-    *   **The System**: Native PyTorch convolution is massively parallelized and cache-tuned by hardware vendors. Our "End-to-End" speed is currently slowed down by the Python-to-C++ transition and manual tensor packing.
-3.  **The Categorical Win**: **Storage**. We achieved an absolute **32x reduction** in model weight size (0.28 MB vs 9.2 MB). This is the primary driver for edge deployment on low-memory microcontrollers.
+1.  **Mathematical Win (The Kernel)**: Isolating the core logic in `benchmark.py`, our Bitwise Kernel is **1.56x faster** than native FP32 convolution on a single thread. The math is winning.
+2.  **The "Python Tax"**: The full model is slowed down by 7 layers of Python-based loops, tensor management, and explicit bit-packing calls. In native FP32, these steps are optimized away inside the C++ engine.
+3.  **RAM Usage (Activations vs Weights)**: 
+    *   **Weights**: We won (32x reduction).
+    *   **Activations**: Because we use **Bi-Real Net Residuals**, we must keep high-precision **Float Activations** for the sum. The BNN actually uses *more* RAM currently because it holds both the Float activation and a temporary Packed Bit version of it for the XNOR pipeline.
+4.  **System Efficiency**: Highly-tuned libraries like `ARM ACL` or `MKL-DNN` used by FP32 PyTorch have decades of assembly-level cache tuning. Our BNN engine is a high-performance prototype that is **already 1.25x faster than ONNX Runtime** for the same model.
 
-> [!TIP]
-> To match your expectation for RAM/Speed dominance, the entire inference graph (including residuals and packing) should be moved from Python into the C++ extension.
+> [!IMPORTANT]
+> To realize the full speed/RAM potential, the next engineering step is a **Fused C++ Operator** that handles the entire Binary-Residual block (BN -> Pack -> XNOR -> Sum) as a single call, bypassing Python entirely.
 
 ---
 
