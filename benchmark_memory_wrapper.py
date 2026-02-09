@@ -17,7 +17,9 @@ def run_bench(cmd):
 
 def main():
     contenders = {
-        "PyTorch (FP32 Sim)": "python3 benchmark_memory_isolated.py sim",
+        "SimpleNet (Shallow FP32)": "python3 benchmark_memory_isolated.py teacher",
+        "OptimizedFP32Net (Fair FP32)": "python3 benchmark_memory_isolated.py fp32_deep",
+        "Optimized BNN (PyTorch)": "python3 benchmark_memory_isolated.py sim",
         "ONNX Runtime": "python3 benchmark_memory_isolated.py onnx",
         "Bitwise Kernel (Manual)": "python3 benchmark_memory_isolated.py bitwise"
     }

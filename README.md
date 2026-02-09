@@ -144,19 +144,20 @@ We conducted a rigorous comparison between the **Custom Bitwise Kernel**, **PyTo
 #### Performance Matrix
 | Model / Engine | Version | Accuracy | Avg Latency | Peak RAM | Weight Size |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **SimpleNet (Teacher)** | **FP32** | **87.11%** | **544.46 ms** | **572.70 MB** | 8.00 MB |
-| Optimized BNN (PyTorch) | Simulated | 81.35% | 2156.08 ms | 788.94 MB | 9.20 MB |
-| Optimized BNN (ONNX) | Optimized KD | 81.34% | 2447.90 ms | **675.62 MB** | 9.20 MB |
-| **Optimized BNN (Bitwise)**| **Custom NEON** | 81.34% | **1819.14 ms*** | 769.30 MB | **0.28 MB (32x)!!** |
+| **SimpleNet (Teacher)** | Shallow FP32 | **87.11%** | **616.89 ms** | **575.77 MB** | 8.00 MB |
+| **OptimizedFP32Net** | **Fair FP32** | -- | **1503.13 ms** | **586.17 MB** | 9.20 MB |
+| Optimized BNN (PyTorch) | Simulated | 81.35% | 2045.37 ms | 779.69 MB | 9.20 MB |
+| Optimized BNN (ONNX) | Optimized KD | 81.35% | 2201.82 ms | 627.03 MB | 9.20 MB |
+| **Optimized BNN (Bitwise)**| **Custom NEON** | 81.34% | **1735.30 ms*** | 790.02 MB | **0.28 MB (32x)!!** |
 
 #### Key Insights
-1.  **Architecture Depth**: The **FP32 Teacher** (`SimpleNet`) is faster and leaner primarily because it is a **shallower 3-layer network**. By contrast, the **Optimized BNN** is a **7-layer deep architecture** designed to maximize accuracy through residual flow.
-2.  **Apples-to-Apples (Same Model)**: For the **same deep architecture** (`OptimizedXNORNet`), the **Bitwise Kernel** is **~1.2x faster** than PyTorch and **~1.35x faster** than ONNX Runtime.
-3.  **Storage Dominance**: The BNN achieves an untouchable **32x reduction** in storage requirement (0.28 MB vs 9+ MB), enabling complex models to fit in cache or tiny embedded memory.
-4.  **Bitwise Benefit**: Even with the overhead of Python-based tensor packing, bit-level parallelism overcomes the raw speed of highly tuned FP32 libraries on modern ARM64 cores.
+1.  **Engine Supremacy**: For the *exact same model* (`OptimizedXNORNet`), our handcrafted **Bitwise Kernel** is the fastest, beating PyTorch (Simulated) by **1.18x** and ONNX Runtime by **1.27x**.
+2.  **Architecture Depth**: The **FP32 Teacher** is fastest primarily because it is a **shallower 3-layer network**. The true comparison for the BNN's 7-layer graph is the **OptimizedFP32Net**, which is only ~15% faster than the Bitwise BNN despite decades of optimization in native FP32 libraries.
+3.  **The RAM Trade-off**: Interestingly, the BNN uses more runtime RAM than the FP32 models. This is due to the **Python-level buffer management** and explicit bit-packing required by the custom inference loop.
+4.  **Storage Dominance**: The BNN achieves an absolute **32x reduction** in storage (0.28 MB vs 9+ MB), enabling deep models to run on devices where FP32 weights simply will not fit.
 
 > [!IMPORTANT]
-> \* The Bitwise speedup is **1.42x** at the core kernel level. The total end-to-end BNN inference is currently bottlenecked by Python packing logic. Moving the entire graph into the C++ extension would likely put the 7-layer BNN's speed on par with the 3-layer FP32 teacher.
+> \* The Bitwise speedup is **1.42x** at the core kernel level. The total end-to-end BNN inference is currently bottlenecked by Python packing logic. Moving the entire graph and residual flow into C++ would likely allow the BNN to match or exceed FP32 speed even on high-end CPUs.
 
 ---
 

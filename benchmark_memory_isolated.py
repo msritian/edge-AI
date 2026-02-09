@@ -70,6 +70,23 @@ def run():
         with torch.no_grad():
             for _ in range(5): _ = model(inputs)
             
+    elif target == 'fp32_deep':
+        model = get_model('fp32_deep', num_classes=10)
+        model.eval()
+        with torch.no_grad():
+            for _ in range(5): _ = model(inputs)
+            
+    elif target == 'teacher':
+        model = get_model('baseline', num_classes=10)
+        ckpt = torch.load('checkpoints/baseline_cifar10.pth', map_location='cpu', weights_only=True)
+        if 'state_dict' in ckpt:
+            model.load_state_dict(ckpt['state_dict'])
+        else:
+            model.load_state_dict(ckpt)
+        model.eval()
+        with torch.no_grad():
+            for _ in range(5): _ = model(inputs)
+            
     elif target == 'onnx':
         onnx_path = 'checkpoints/xnor_network.onnx'
         sess_options = ort.SessionOptions()

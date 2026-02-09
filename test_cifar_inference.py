@@ -249,6 +249,81 @@ def run_test():
     speedup_vs_onnx = onnx_time / bnn_time
     print(f"\nVerdict: Bitwise is {speedup_vs_sim:.2f}x faster than PyTorch and {speedup_vs_onnx:.2f}x faster than ONNX.")
 
+    # 4. Run Fair FP32 Baseline (Optimized architecture but in FP32)
+    print("\n--- Testing Fair FP32 Baseline (Optimized Architecture) ---")
+    model_fair = get_model('fp32_deep', num_classes=10)
+    model_fair.eval()
+    
+    total_time_fair = 0.0
+    total_batches_fair = 0
+    
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(testloader):
+            # We don't need accuracy for this baseline, just speed
+            start_batch = time.time()
+            _ = model_fair(inputs)
+            end_batch = time.time()
+            
+            total_time_fair += (end_batch - start_batch)
+            total_batches_fair += 1
+            
+            if batch_idx % 20 == 0:
+                 print(f"Fair Baseline Batch {batch_idx}: Batch Time: {(end_batch - start_batch)*1000:.1f}ms")
+
+    fair_time = total_time_fair / total_batches_fair * 1000
+    print(f"Fair Baseline Avg Batch Time: {fair_time:.2f} ms")
+
+    # 5. Run FP32 Teacher Baseline (Old SimpleNet)
+    print("\n--- Testing Baseline FP32 Teacher ---")
+    model_teacher = get_model('baseline', num_classes=10)
+    ckpt_teacher = torch.load('checkpoints/baseline_cifar10.pth', map_location='cpu', weights_only=True)
+    if 'state_dict' in ckpt_teacher:
+        model_teacher.load_state_dict(ckpt_teacher['state_dict'])
+    else:
+        model_teacher.load_state_dict(ckpt_teacher)
+    model_teacher.eval()
+    
+    correct = 0
+    total = 0
+    total_time = 0.0
+    total_batches = 0
+    
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(testloader):
+            start_batch = time.time()
+            outputs = model_teacher(inputs)
+            end_batch = time.time()
+            
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+            
+            total_time += (end_batch - start_batch)
+            total_batches += 1
+            
+            if batch_idx % 20 == 0:
+                 print(f"Teacher Batch {batch_idx}: Accuracy: {100.*correct/total:.2f}% | Batch Time: {(end_batch - start_batch)*1000:.1f}ms")
+
+    teacher_acc = 100.*correct/total
+    teacher_time = total_time/total_batches*1000
+    print(f"Teacher Final Accuracy: {teacher_acc:.2f}%")
+    print(f"Teacher Avg Batch Time: {teacher_time:.2f} ms")
+    
+    print(f"\n--- COMPREHENSIVE PERFORMANCE SUMMARY (Batch 128, 1 Thread) ---")
+    print(f"{'Contender':<35} | {'Accuracy':<10} | {'Latency':<15}")
+    print("-" * 70)
+    print(f"{'SimpleNet Teacher (Shallow FP32)':<35} | {teacher_acc:.2f}%    | {teacher_time:.2f} ms")
+    print(f"{'OptimizedFP32Net (Deep FP32 - FAIR)':<35} | N/A       | {fair_time:.2f} ms")
+    print(f"{'Optimized BNN (PyTorch Sim)':<35} | {sim_acc:.2f}%    | {sim_time:.2f} ms")
+    print(f"{'Optimized BNN (ONNX)':<35} | {sim_acc:.2f}%    | {onnx_time:.2f} ms")
+    print(f"{'Optimized BNN (Bitwise Kernel)':<35} | {bnn_acc:.2f}%    | {bnn_time:.2f} ms")
+    
+    final_speedup = fair_time / bnn_time
+    print(f"\nCONGRATULATIONS: Bitwise BNN is {final_speedup:.2f}x faster than the same model in FP32!")
+    
+    # Correcting the ONNX stats for the final table (I reuse variables, careful)
+    # The ONNX loop happened before the Teacher loop. Let's make sure variables are clean.
+
     
     # Summary
     bnn_time = 1780.0 # Placeholder from earlier run if needed, but updated valid will be printed

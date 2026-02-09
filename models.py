@@ -131,9 +131,42 @@ class OptimizedXNORNet(nn.Module):
         x = self.classifier(x)
         return x
 
+class OptimizedFP32Net(nn.Module):
+    def __init__(self, num_classes=10):
+        super(OptimizedFP32Net, self).__init__()
+        self.conv1 = nn.Conv2d(3, 128, kernel_size=3, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(128)
+        
+        self.features = nn.Sequential(
+            nn.Sequential(nn.Conv2d(128, 128, 3, padding=1, bias=False), nn.BatchNorm2d(128), nn.ReLU(inplace=True)),
+            nn.Sequential(nn.Conv2d(128, 128, 3, padding=1, bias=False, stride=2), nn.BatchNorm2d(128), nn.ReLU(inplace=True)),
+            nn.Sequential(nn.Conv2d(128, 256, 3, padding=1, bias=False), nn.BatchNorm2d(256), nn.ReLU(inplace=True)),
+            nn.Sequential(nn.Conv2d(256, 256, 3, padding=1, bias=False, stride=2), nn.BatchNorm2d(256), nn.ReLU(inplace=True)),
+            nn.Sequential(nn.Conv2d(256, 512, 3, padding=1, bias=False), nn.BatchNorm2d(512), nn.ReLU(inplace=True)),
+            nn.Sequential(nn.Conv2d(512, 512, 3, padding=1, bias=False, stride=2), nn.BatchNorm2d(512), nn.ReLU(inplace=True)),
+        )
+        
+        self.classifier = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(512 * 4 * 4, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(1024, num_classes)
+        )
+
+    def forward(self, x):
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
 def get_model(model_type='xnor', num_classes=10):
     if model_type == 'xnor':
         return OptimizedXNORNet(num_classes)
+    elif model_type == 'fp32_deep':
+        return OptimizedFP32Net(num_classes)
     else:
         return SimpleNet(num_classes)
 
