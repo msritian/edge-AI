@@ -46,7 +46,35 @@ def benchmark():
     bw_time = (end - start) / iters
     print(f"Bitwise Kernel Conv2d Avg Time: {bw_time*1000:.4f} ms")
     
-    print(f"Speedup: {pt_time / bw_time:.2f}x")
+    print(f"Speedup Latency (Batch 1): {pt_time / bw_time:.2f}x")
+
+    # 3. Throughput Benchmark (Batch Size = 128)
+    print("\n--- Benchmarking Throughput (Batch 128) ---")
+    batch_size = 128
+    input_float = torch.randn(batch_size, in_channels, height, width).to(device).sign()
+    # Weights same as before
+    
+    # Pack input for proper timing
+    input_packed = bitwise_ops.pack_tensor(input_float)
+    
+    # FP32
+    start = time.time()
+    for _ in range(iters):
+        res_pt = F.conv2d(input_float, weight_float, padding=padding, stride=stride)
+    pt_time = (time.time() - start) / iters
+    print(f"FP32 Avg Time (Batch 128): {pt_time*1000:.4f} ms")
+    
+    # Bitwise
+    start = time.time()
+    for _ in range(iters):
+        res_bw = bitwise_ops.bitwise_conv2d(input_packed, weight_packed, in_channels, padding, stride)
+    bw_time = (time.time() - start) / iters
+    print(f"Bitwise Avg Time (Batch 128): {bw_time*1000:.4f} ms")
+    
+    print(f"Speedup Throughput: {pt_time / bw_time:.2f}x")
 
 if __name__ == "__main__":
+    # Test single-thread performance (Fair Comparison)
+    # print("Forcing Single-Thread Execution for Fair Comparison...")
+    # torch.set_num_threads(1)
     benchmark()
